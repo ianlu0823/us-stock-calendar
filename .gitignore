@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Local environment
+.env
+.env.local
+
+# Local data/cache
+data/*.json
+data/*.sqlite
+data/*.sqlite3
+data/*.db
+data/cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+

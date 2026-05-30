@@ -1,0 +1,15 @@
+{
+  "name": "us-stock-calendar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first US stock earnings calendar.",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js",
+    "refresh": "node scripts/refresh.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
+
