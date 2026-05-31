@@ -3,6 +3,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildCalendarFeed } from "./calendarFeed.js";
 import { getCachedEarnings, refreshEarnings } from "./refreshEarnings.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -31,6 +32,11 @@ const server = createServer(async (request, response) => {
 
   if (url.pathname === "/api/events" && request.method === "GET") {
     await sendJson(response, await getCachedEarnings());
+    return;
+  }
+
+  if (url.pathname === "/calendar.ics" && request.method === "GET") {
+    await sendCalendar(response, buildCalendarFeed(await getCachedEarnings(), calendarOptionsFromUrl(url)));
     return;
   }
 
@@ -84,6 +90,33 @@ async function sendJson(response, payload, status = 200) {
     "Content-Type": "application/json; charset=utf-8",
   });
   response.end(`${JSON.stringify(payload)}\n`);
+}
+
+async function sendCalendar(response, calendar, status = 200) {
+  response.writeHead(status, {
+    "Content-Type": "text/calendar; charset=utf-8",
+    "Cache-Control": "public, max-age=900",
+  });
+  response.end(calendar);
+}
+
+function calendarOptionsFromUrl(url) {
+  const symbol = url.searchParams.get("symbol");
+  const reportDate = url.searchParams.get("date");
+  const reportTime = url.searchParams.get("time");
+
+  if (!symbol && !reportDate && !reportTime) {
+    return {};
+  }
+
+  return {
+    symbol,
+    reportDate,
+    reportTime,
+    startDate: reportDate || undefined,
+    endDate: reportDate || undefined,
+    tiers: ["mega", "large", "small", "unknown"],
+  };
 }
 
 server.listen(port, host, () => {

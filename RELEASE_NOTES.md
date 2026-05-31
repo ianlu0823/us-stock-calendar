@@ -1,5 +1,25 @@
 # Release Notes
 
+## v0.2.0 - Event Calendar Export
+
+This version adds per-event `.ics` calendar export for upcoming US earnings events.
+
+### Highlights
+
+- New `/calendar.ics` endpoint with optional event filters.
+- Click a Pre/After timing badge to download that event's calendar file.
+- Timed calendar events instead of all-day events:
+  - Pre: 08:00 America/New_York
+  - After: 16:30 America/New_York
+- 30-minute event duration.
+- Stable event UIDs based on ticker, report date, and timing.
+- Unfiltered feed defaults to the current core use case: Mega cap earnings with known timing over the next 60 days.
+
+### Notes
+
+- Calendar files are generated from the local cache. Refresh data first if the cache is empty.
+- On Render Free, the cache remains ephemeral and can be lost after restarts or idle spin-downs.
+
 ## v0.1.0 - Local Earnings Calendar
 
 This first version establishes a local-first US stock earnings calendar for personal use.
@@ -60,8 +80,6 @@ http://127.0.0.1:3000
 ### Next Candidates
 
 - Telegram daily or weekly digest.
-- `.ics` calendar subscription feed.
 - Optional watchlist/import support.
 - ETF or index-based filters.
 - Deployment target for always-on refresh and notifications.
-

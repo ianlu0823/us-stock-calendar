@@ -286,7 +286,7 @@ function renderEventRow(event) {
       <div>
         <div class="symbol-line">
           <strong>${escapeHtml(event.symbol)}</strong>
-          ${renderTimeBadge(event.reportTime)}
+          ${renderTimeBadge(event)}
           ${renderTierBadge(event.marketCapTier)}
         </div>
         <p>${escapeHtml(event.name || "Unknown company")}</p>
@@ -305,12 +305,12 @@ function renderEventCard(event) {
     <article class="event-card">
       <div class="symbol-line">
         <strong>${escapeHtml(event.symbol)}</strong>
-        ${renderTimeBadge(event.reportTime)}
+        ${renderTimeBadge(event)}
         ${renderTierBadge(event.marketCapTier)}
       </div>
       <p class="company-name">${escapeHtml(event.name || "Unknown company")}</p>
       ${renderIndustryLine(event)}
-      <span>${escapeHtml(latestCloseText(event))}</span>
+      <span class="latest-sale">${escapeHtml(latestCloseText(event))}</span>
     </article>
   `;
 }
@@ -328,13 +328,26 @@ function renderTierBadge(tier) {
   return `<span class="tier ${escapeHtml(tier || "unknown")}">${tierLabel(tier)}</span>`;
 }
 
-function renderTimeBadge(time) {
+function renderTimeBadge(event) {
+  const time = event.reportTime;
   const label = timeLabel(time);
   if (!label) {
     return "";
   }
 
-  return `<span class="time-badge ${escapeHtml(time)}">${label}</span>`;
+  const href = calendarEventUrl(event);
+  const download = `${event.symbol}-${event.reportDate}-${event.reportTime}.ics`;
+
+  return `<a class="time-badge ${escapeHtml(time)}" href="${escapeHtml(href)}" download="${escapeHtml(download)}" aria-label="Add ${escapeHtml(event.symbol)} ${label} earnings to calendar">${label}</a>`;
+}
+
+function calendarEventUrl(event) {
+  const params = new URLSearchParams({
+    symbol: event.symbol,
+    date: event.reportDate,
+    time: event.reportTime,
+  });
+  return `/calendar.ics?${params.toString()}`;
 }
 
 function latestCloseText(event) {
