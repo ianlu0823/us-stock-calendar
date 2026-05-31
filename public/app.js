@@ -1,5 +1,75 @@
 const dayMs = 24 * 60 * 60 * 1000;
 const today = toDateString(new Date());
+const fallbackVersion = "0.2.0";
+const fallbackReleaseNotes = `# Release Notes
+
+## v0.2.0 - Event Calendar Export
+
+This version adds per-event .ics calendar export for upcoming US earnings events.
+
+### Highlights
+
+- New /calendar.ics endpoint with optional event filters.
+- Click a Pre/After timing badge to download that event's calendar file.
+- Timed calendar events instead of all-day events:
+  - Pre: 08:00 America/New_York
+  - After: 16:30 America/New_York
+- 30-minute event duration.
+- Stable event UIDs based on ticker, report date, and timing.
+- Unfiltered feed defaults to the current core use case: Mega cap earnings with known timing over the next 60 days.
+
+### Notes
+
+- Calendar files are generated from the local cache. Refresh data first if the cache is empty.
+- On Render Free, the cache remains ephemeral and can be lost after restarts or idle spin-downs.
+
+## v0.1.0 - Local Earnings Calendar
+
+This first version establishes a local-first US stock earnings calendar for personal use.
+
+### Highlights
+
+- Daily, weekly, and monthly earnings calendar views.
+- Manual refresh from public Nasdaq earnings data.
+- Local JSON cache under data/, excluded from git.
+- Default display focused on Mega cap stocks.
+- Market-cap filters:
+  - Mega: $200B+
+  - Large: $10B-$200B
+  - Small: <$10B
+- Sector dropdown filter populated from Nasdaq stock screener data.
+- Earnings timing badges:
+  - Pre: pre market
+  - After: after market
+- Events with unknown earnings timing are cached but hidden from the calendar.
+- Event cards show:
+  - ticker
+  - timing badge
+  - market-cap tier
+  - company name
+  - sector
+  - latest sale, net change, and percent change
+  - EPS estimate when available
+
+### Data Sources
+
+- Earnings calendar: Nasdaq public earnings calendar endpoint.
+- Sector, industry, country, latest sale, and price change: Nasdaq public stock screener endpoint.
+
+### Known Limitations
+
+- No login or multi-user support.
+- No Telegram reminder yet.
+- No automatic scheduled refresh yet.
+- Earnings dates and market data depend on public Nasdaq endpoints.
+- Sector labels use Nasdaq's classification, not standardized GICS categories.
+
+### Next Candidates
+
+- Telegram daily or weekly digest.
+- Optional watchlist/import support.
+- ETF or index-based filters.
+- Deployment target for always-on refresh and notifications.`;
 
 const state = {
   events: [],
@@ -11,11 +81,19 @@ const state = {
   loading: true,
   refreshing: false,
   error: "",
+  version: fallbackVersion,
+  releaseNotes: fallbackReleaseNotes,
+  releaseNotesError: "",
 };
 
 const output = document.querySelector("#calendar-output");
 const statusLine = document.querySelector("#status-line");
 const refreshButton = document.querySelector("#refresh-button");
+const versionLink = document.querySelector("#version-link");
+const releaseDialog = document.querySelector("#release-dialog");
+const releaseTitle = document.querySelector("#release-title");
+const releaseContent = document.querySelector("#release-content");
+const releaseClose = document.querySelector("#release-close");
 const sectorFilter = document.querySelector("#sector-filter");
 
 document.querySelectorAll("[data-view]").forEach((button) => {
@@ -37,6 +115,13 @@ document.querySelectorAll("[data-tier]").forEach((checkbox) => {
 });
 
 refreshButton.addEventListener("click", refreshData);
+versionLink.addEventListener("click", openReleaseNotes);
+releaseClose.addEventListener("click", closeReleaseNotes);
+releaseDialog.addEventListener("click", (event) => {
+  if (event.target === releaseDialog) {
+    closeReleaseNotes();
+  }
+});
 
 sectorFilter.addEventListener("change", () => {
   state.sector = sectorFilter.value;
@@ -64,7 +149,54 @@ output.addEventListener("change", (event) => {
   }
 });
 
+loadVersion();
 loadData();
+
+async function loadVersion() {
+  try {
+    const response = await fetch("/api/version");
+    if (!response.ok) {
+      throw new Error(`Release notes request failed: ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error("Release notes response was not JSON.");
+    }
+
+    const payload = await response.json();
+    state.version = payload.version || state.version;
+    state.releaseNotes = payload.releaseNotes || state.releaseNotes;
+    state.releaseNotesError = "";
+    versionLink.textContent = state.version ? `v${state.version}` : versionLink.textContent;
+  } catch (error) {
+    state.releaseNotesError = error.message || "Unable to load release notes.";
+  }
+}
+
+function openReleaseNotes() {
+  releaseTitle.textContent = state.version ? `Latest version v${state.version}` : "Release notes";
+  releaseContent.innerHTML = state.releaseNotes
+    ? renderReleaseNotes(state.releaseNotes)
+    : renderReleaseNotesFallback(state.releaseNotesError);
+
+  if (typeof releaseDialog.showModal === "function") {
+    releaseDialog.showModal();
+  } else {
+    releaseDialog.setAttribute("open", "");
+  }
+}
+
+function renderReleaseNotesFallback(message) {
+  return `
+    <p>Release notes are not available yet.</p>
+    <p>${escapeHtml(message || "Try refreshing after the latest deployment finishes.")}</p>
+  `;
+}
+
+function closeReleaseNotes() {
+  releaseDialog.close();
+}
 
 async function loadData() {
   state.loading = true;
@@ -517,6 +649,81 @@ function formatMonthDay(dateString) {
 
 function weekdayName(date) {
   return date.toLocaleDateString(undefined, { weekday: "short" });
+}
+
+function renderReleaseNotes(markdown) {
+  const lines = String(markdown || "").split(/\r?\n/);
+  const html = [];
+  let inList = false;
+  let inCode = false;
+  let codeLines = [];
+
+  for (const line of lines) {
+    if (line.startsWith("```")) {
+      if (inCode) {
+        html.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+        codeLines = [];
+      }
+      inCode = !inCode;
+      continue;
+    }
+
+    if (inCode) {
+      codeLines.push(line);
+      continue;
+    }
+
+    const closeList = () => {
+      if (inList) {
+        html.push("</ul>");
+        inList = false;
+      }
+    };
+
+    if (!line.trim()) {
+      closeList();
+      continue;
+    }
+
+    if (line.startsWith("### ")) {
+      closeList();
+      html.push(`<h4>${escapeHtml(line.slice(4))}</h4>`);
+      continue;
+    }
+
+    if (line.startsWith("## ")) {
+      closeList();
+      html.push(`<h3>${escapeHtml(line.slice(3))}</h3>`);
+      continue;
+    }
+
+    if (line.startsWith("# ")) {
+      closeList();
+      continue;
+    }
+
+    if (line.trimStart().startsWith("- ")) {
+      if (!inList) {
+        html.push("<ul>");
+        inList = true;
+      }
+      html.push(`<li>${escapeHtml(line.trimStart().slice(2))}</li>`);
+      continue;
+    }
+
+    closeList();
+    html.push(`<p>${escapeHtml(line)}</p>`);
+  }
+
+  if (inCode) {
+    html.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+  }
+
+  if (inList) {
+    html.push("</ul>");
+  }
+
+  return html.join("");
 }
 
 function escapeHtml(value) {

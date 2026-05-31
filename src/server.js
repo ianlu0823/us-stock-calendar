@@ -1,5 +1,5 @@
 import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,8 @@ import { getCachedEarnings, refreshEarnings } from "./refreshEarnings.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const publicDir = join(root, "public");
+const packagePath = join(root, "package.json");
+const releaseNotesPath = join(root, "RELEASE_NOTES.md");
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 
@@ -32,6 +34,11 @@ const server = createServer(async (request, response) => {
 
   if (url.pathname === "/api/events" && request.method === "GET") {
     await sendJson(response, await getCachedEarnings());
+    return;
+  }
+
+  if (url.pathname === "/api/version" && request.method === "GET") {
+    await sendJson(response, await getVersionInfo());
     return;
   }
 
@@ -98,6 +105,19 @@ async function sendCalendar(response, calendar, status = 200) {
     "Cache-Control": "public, max-age=900",
   });
   response.end(calendar);
+}
+
+async function getVersionInfo() {
+  const [packageJson, releaseNotes] = await Promise.all([
+    readFile(packagePath, "utf8"),
+    readFile(releaseNotesPath, "utf8"),
+  ]);
+  const packageInfo = JSON.parse(packageJson);
+
+  return {
+    version: packageInfo.version,
+    releaseNotes,
+  };
 }
 
 function calendarOptionsFromUrl(url) {

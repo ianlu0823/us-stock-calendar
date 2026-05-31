@@ -10,8 +10,10 @@
     <main class="shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Local earnings calendar</p>
-          <h1>US Stock Calendar</h1>
+          <h1>
+            US Stock Calendar
+            <button id="version-link" class="version-link" type="button">v0.2.0</button>
+          </h1>
           <p id="status-line" class="status-line">Loading earnings calendar...</p>
         </div>
         <div class="topbar-actions">
@@ -51,6 +53,19 @@
         <div id="calendar-output"></div>
       </section>
     </main>
+
+    <dialog id="release-dialog" class="release-dialog">
+      <div class="release-modal">
+        <header class="release-header">
+          <div>
+            <p class="eyebrow">Release notes</p>
+            <h2 id="release-title">Latest version</h2>
+          </div>
+          <button id="release-close" class="icon-button" type="button" aria-label="Close release notes">×</button>
+        </header>
+        <div id="release-content" class="release-content"></div>
+      </div>
+    </dialog>
 
     <script src="/app.js" type="module"></script>
   </body>
