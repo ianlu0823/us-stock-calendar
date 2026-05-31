@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "node src/server.js",
+    "start": "node src/server.js",
     "refresh": "node scripts/refresh.js"
   },
   "engines": {
     "node": ">=20"
   }
 }
-

@@ -8,7 +8,7 @@ import { getCachedEarnings, refreshEarnings } from "./refreshEarnings.js";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const publicDir = join(root, "public");
 const port = Number(process.env.PORT || 3000);
-const host = process.env.HOST || "127.0.0.1";
+const host = process.env.HOST || (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -19,6 +19,15 @@ const contentTypes = {
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host}`);
+
+  if (url.pathname === "/healthz" && request.method === "GET") {
+    await sendJson(response, {
+      ok: true,
+      service: "us-stock-calendar",
+      time: new Date().toISOString(),
+    });
+    return;
+  }
 
   if (url.pathname === "/api/events" && request.method === "GET") {
     await sendJson(response, await getCachedEarnings());
