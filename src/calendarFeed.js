@@ -72,9 +72,8 @@ function renderCalendarEvent(event, generatedAt) {
     `Timing: ${timing.label}`,
     event.sector ? `Sector: ${event.sector}` : "",
     event.industry ? `Industry: ${event.industry}` : "",
-    event.epsForecast ? `EPS estimate: ${event.epsForecast}` : "",
+    epsLine(event),
     event.marketCapDisplay ? `Market cap: ${event.marketCapDisplay}` : "",
-    latestSaleLine(event),
     "Source: Nasdaq public earnings calendar",
   ].filter(Boolean);
 
@@ -137,13 +136,14 @@ function calendarUid(event) {
   return `${symbol}-${event.reportDate}-${event.reportTime}@${feedDomain}`;
 }
 
-function latestSaleLine(event) {
-  if (!event.lastSale) {
+function epsLine(event) {
+  if (!event.epsForecast && !event.previousQuarterEps) {
     return "";
   }
 
-  const changes = [event.netChange, event.percentChange].filter(Boolean).join(" ");
-  return changes ? `Latest sale: ${event.lastSale} ${changes}` : `Latest sale: ${event.lastSale}`;
+  return [`EPS estimate: ${event.epsForecast || "N/A"}`, `Last Quarter: ${event.previousQuarterEps || "N/A"}`].join(
+    "  ",
+  );
 }
 
 function compareCalendarEvents(a, b) {

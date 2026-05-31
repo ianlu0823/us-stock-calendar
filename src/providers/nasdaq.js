@@ -2,6 +2,7 @@ import { classifyMarketCap, formatMarketCap, parseMarketCap } from "../marketCap
 
 const endpoint = "https://api.nasdaq.com/api/calendar/earnings";
 const screenerEndpoint = "https://api.nasdaq.com/api/screener/stocks";
+const earningsSurpriseEndpoint = "https://api.nasdaq.com/api/company";
 
 export async function fetchNasdaqEarnings(date) {
   const url = new URL(endpoint);
@@ -67,6 +68,34 @@ export async function fetchNasdaqStockDirectory() {
   return directory;
 }
 
+export async function fetchNasdaqEarningsSurprises(symbol) {
+  const url = new URL(`${earningsSurpriseEndpoint}/${encodeURIComponent(symbol)}/earnings-surprise`);
+
+  const response = await fetch(url, {
+    headers: requestHeaders,
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Nasdaq earnings surprise request failed for ${symbol}: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const rows = payload?.data?.earningsSurpriseTable?.rows;
+
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+  return rows.map((row) => ({
+    fiscalQuarterEnd: clean(row.fiscalQtrEnd),
+    dateReported: clean(row.dateReported),
+    eps: clean(row.eps),
+    consensusForecast: clean(row.consensusForecast),
+    percentageSurprise: clean(row.percentageSurprise),
+  }));
+}
+
 function normalizeNasdaqRow(row, reportDate) {
   const symbol = clean(row.symbol).toUpperCase();
   const marketCap = parseMarketCap(row.marketCap);
@@ -81,6 +110,9 @@ function normalizeNasdaqRow(row, reportDate) {
     reportTimeLabel: reportTimeLabels[reportTime],
     fiscalQuarterEnding: clean(row.fiscalQuarterEnding),
     epsForecast: clean(row.epsForecast),
+    previousQuarterEps: "",
+    previousQuarterReportDate: "",
+    previousQuarterFiscalEnd: "",
     estimatesCount: clean(row.noOfEsts),
     marketCap,
     marketCapDisplay: formatMarketCap(marketCap),
