@@ -77,6 +77,12 @@ async function loadData() {
     state.events = Array.isArray(payload.events) ? payload.events : [];
     state.meta = payload.meta || null;
     renderSectorOptions();
+
+    if (!state.meta?.updatedAt) {
+      state.loading = false;
+      render();
+      await refreshData();
+    }
   } catch (error) {
     state.error = error.message || "Unable to load events.";
   } finally {
