@@ -502,8 +502,11 @@ h1 {
 .more-count {
   display: grid;
   place-items: center;
+  width: 100%;
   min-height: 140px;
+  border: 0;
   color: var(--muted);
+  font: inherit;
   font-weight: 700;
   text-align: center;
 }
@@ -513,7 +516,20 @@ h1 {
   min-height: 54px;
   border: 1px dashed var(--line);
   border-radius: 8px;
+  background: transparent;
   font-size: 0.86rem;
+}
+
+.more-count {
+  cursor: pointer;
+}
+
+.more-count:hover,
+.more-count:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .empty-state.error {

@@ -140,6 +140,7 @@ output.addEventListener("click", (event) => {
   if (action === "next-week") shiftSelectedDate(7);
   if (action === "prev-month") shiftSelectedMonth(-1);
   if (action === "next-month") shiftSelectedMonth(1);
+  if (action === "show-day") showDay(event.target.closest("[data-date]")?.dataset.date);
 });
 
 output.addEventListener("change", (event) => {
@@ -326,7 +327,11 @@ function renderWeeklyView() {
               </div>
               <div class="event-stack">
                 ${events.length ? events.slice(0, 12).map(renderEventCard).join("") : renderQuietEmpty()}
-                ${events.length > 12 ? `<div class="more-count">+${events.length - 12} more</div>` : ""}
+                ${
+                  events.length > 12
+                    ? `<button type="button" class="more-count" data-action="show-day" data-date="${date}">+${events.length - 12} more</button>`
+                    : ""
+                }
               </div>
             </section>
           `;
@@ -506,17 +511,14 @@ function renderQuietEmpty() {
 }
 
 function eventsForDate(date) {
-  return visibleEvents()
+  return filteredEvents()
     .filter((event) => event.reportDate === date)
     .sort(compareEvents);
 }
 
-function visibleEvents() {
-  const endDate = toDateString(addDays(parseDate(today), 60));
+function filteredEvents() {
   return state.events.filter((event) => {
     return (
-      event.reportDate >= today &&
-      event.reportDate <= endDate &&
       event.reportTime !== "unknown" &&
       state.tiers.has(event.marketCapTier || "unknown") &&
       (!state.sector || event.sector === state.sector)
@@ -595,6 +597,16 @@ function shiftSelectedMonth(months) {
   const date = parseDate(state.selectedDate);
   date.setMonth(date.getMonth() + months);
   state.selectedDate = toDateString(date);
+  render();
+}
+
+function showDay(date) {
+  if (!date) {
+    return;
+  }
+
+  state.selectedDate = date;
+  state.view = "day";
   render();
 }
 

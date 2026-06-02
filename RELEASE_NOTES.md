@@ -1,5 +1,15 @@
 # Release Notes
 
+## v0.2.1 - Calendar Display Fixes
+
+This version fixes date visibility and mobile overflow behavior in the earnings calendar.
+
+### Fixes
+
+- Show cached earnings for the selected date even when that date is before today.
+- Fix weekly `+N more` controls so they open the full day view on mobile and desktop.
+- Keep the `+N more` control styled consistently while making it keyboard-focusable.
+
 ## v0.2.0 - Event Calendar Export
 
 This version adds per-event `.ics` calendar export for upcoming US earnings events.
