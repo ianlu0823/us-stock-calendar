@@ -72,7 +72,7 @@ function renderCalendarEvent(event, generatedAt) {
     `Timing: ${timing.label}`,
     event.sector ? `Sector: ${event.sector}` : "",
     event.industry ? `Industry: ${event.industry}` : "",
-    epsLine(event),
+    `Yahoo Finance: ${yahooAnalysisUrl(event.symbol)}`,
     event.marketCapDisplay ? `Market cap: ${event.marketCapDisplay}` : "",
     "Source: Nasdaq public earnings calendar",
   ].filter(Boolean);
@@ -136,14 +136,8 @@ function calendarUid(event) {
   return `${symbol}-${event.reportDate}-${event.reportTime}@${feedDomain}`;
 }
 
-function epsLine(event) {
-  if (!event.epsForecast && !event.previousQuarterEps) {
-    return "";
-  }
-
-  return [`EPS estimate: ${event.epsForecast || "N/A"}`, `Last Quarter: ${event.previousQuarterEps || "N/A"}`].join(
-    "  ",
-  );
+function yahooAnalysisUrl(symbol) {
+  return `https://finance.yahoo.com/quote/${encodeURIComponent(String(symbol || "").toUpperCase())}/analysis/`;
 }
 
 function compareCalendarEvents(a, b) {

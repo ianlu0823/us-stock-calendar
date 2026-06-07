@@ -348,9 +348,17 @@ h1 {
   font-weight: 750;
 }
 
-.symbol-line strong {
+.symbol-link {
   color: var(--text);
   font-size: 1rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.symbol-link:hover,
+.symbol-link:focus-visible {
+  color: var(--accent-strong);
+  text-decoration: underline;
 }
 
 .tier {

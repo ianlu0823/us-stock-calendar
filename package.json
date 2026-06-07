@@ -1,6 +1,6 @@
 {
   "name": "us-stock-calendar",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "description": "Local-first US stock earnings calendar.",
   "type": "module",

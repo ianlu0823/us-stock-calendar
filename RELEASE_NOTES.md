@@ -1,5 +1,11 @@
 # Release Notes
 
+## v0.2.2 - Ticker Analysis Links
+
+- Defaults the calendar to Mega and Large cap events.
+- Removes in-app EPS parsing and enrichment in favor of external analysis links.
+- Links ticker symbols and calendar exports to Yahoo Finance analysis pages instead of showing EPS estimate or last-quarter EPS values.
+
 ## v0.2.1 - Calendar Display Fixes
 
 This version fixes date visibility and mobile overflow behavior in the earnings calendar.

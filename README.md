@@ -36,6 +36,10 @@ A local-first web app for tracking upcoming US stock earnings dates.
 
 ## Later
 
+- Link to Yahoo Finance for external earnings analysis:
+  - Keep Nasdaq as the source for earnings date and pre-market/after-hours timing.
+  - Avoid parsing third-party EPS estimate feeds in the app.
+  - Link ticker symbols and calendar event descriptions to Yahoo Finance analysis pages.
 - Telegram daily or weekly digest.
 - Optional watchlist/import flows.
 - ETF or theme-based default lists.

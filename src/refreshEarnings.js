@@ -1,6 +1,6 @@
 import { readEarningsCache, writeEarningsCache } from "./cache.js";
 import { daysBetween, getRefreshRange, listDates } from "./dateRange.js";
-import { fetchNasdaqEarnings, fetchNasdaqEarningsSurprises, fetchNasdaqStockDirectory } from "./providers/nasdaq.js";
+import { fetchNasdaqEarnings, fetchNasdaqStockDirectory } from "./providers/nasdaq.js";
 
 const maxConcurrentRequests = 4;
 
@@ -45,11 +45,7 @@ export async function refreshEarnings(options = {}) {
   }
 
   const enrichedEvents = events.map((event) => enrichEvent(event, stockDirectory));
-  const previousQuarterEpsBySymbol = await fetchPreviousQuarterEpsBySymbol(enrichedEvents, errors);
-  const eventsWithPreviousQuarterEps = enrichedEvents.map((event) =>
-    enrichPreviousQuarterEps(event, previousQuarterEpsBySymbol),
-  );
-  const sortedEvents = dedupeEvents(eventsWithPreviousQuarterEps).sort(compareEvents);
+  const sortedEvents = dedupeEvents(enrichedEvents).sort(compareEvents);
   const cache = {
     events: sortedEvents,
     meta: {
@@ -107,74 +103,6 @@ function enrichEvent(event, stockDirectory) {
     netChange: profile?.netChange || "",
     percentChange: profile?.percentChange || "",
   };
-}
-
-async function fetchPreviousQuarterEpsBySymbol(events, errors) {
-  const symbols = [
-    ...new Set(
-      events
-        .filter((event) => event.reportTime !== "unknown")
-        .map((event) => event.symbol)
-        .filter(Boolean),
-    ),
-  ];
-  const batches = chunk(symbols, maxConcurrentRequests);
-  const bySymbol = new Map();
-
-  for (const batch of batches) {
-    const results = await Promise.allSettled(batch.map((symbol) => fetchNasdaqEarningsSurprises(symbol)));
-    results.forEach((result, index) => {
-      const symbol = batch[index];
-      if (result.status === "fulfilled") {
-        bySymbol.set(symbol, result.value);
-      } else {
-        errors.push({
-          date: `earnings-surprise:${symbol}`,
-          message: result.reason?.message || String(result.reason),
-        });
-      }
-    });
-  }
-
-  return bySymbol;
-}
-
-function enrichPreviousQuarterEps(event, previousQuarterEpsBySymbol) {
-  const rows = previousQuarterEpsBySymbol.get(event.symbol) || [];
-  const previousQuarter = rows.find((row) => isBeforeReportDate(row.dateReported, event.reportDate)) || rows[0];
-
-  if (!previousQuarter?.eps) {
-    return event;
-  }
-
-  return {
-    ...event,
-    previousQuarterEps: previousQuarter.eps,
-    previousQuarterReportDate: previousQuarter.dateReported,
-    previousQuarterFiscalEnd: previousQuarter.fiscalQuarterEnd,
-  };
-}
-
-function isBeforeReportDate(dateReported, reportDate) {
-  const reported = parseUsDate(dateReported);
-  const report = parseReportDate(reportDate);
-  return Boolean(reported && report && reported < report);
-}
-
-function parseUsDate(value) {
-  const [month, day, year] = String(value || "").split("/").map(Number);
-  if (!month || !day || !year) {
-    return null;
-  }
-  return new Date(year, month - 1, day);
-}
-
-function parseReportDate(value) {
-  const [year, month, day] = String(value || "").split("-").map(Number);
-  if (!year || !month || !day) {
-    return null;
-  }
-  return new Date(year, month - 1, day);
 }
 
 function findProfile(symbol, stockDirectory) {

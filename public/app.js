@@ -1,7 +1,23 @@
 const dayMs = 24 * 60 * 60 * 1000;
 const today = toDateString(new Date());
-const fallbackVersion = "0.2.0";
+const fallbackVersion = "0.2.2";
 const fallbackReleaseNotes = `# Release Notes
+
+## v0.2.2 - Ticker Analysis Links
+
+- Defaults the calendar to Mega and Large cap events.
+- Removes in-app EPS parsing and enrichment in favor of external analysis links.
+- Links ticker symbols and calendar exports to Yahoo Finance analysis pages instead of showing EPS estimate or last-quarter EPS values.
+
+## v0.2.1 - Calendar Display Fixes
+
+This version fixes date visibility and mobile overflow behavior in the earnings calendar.
+
+### Fixes
+
+- Show cached earnings for the selected date even when that date is before today.
+- Fix weekly +N more controls so they open the full day view on mobile and desktop.
+- Keep the +N more control styled consistently while making it keyboard-focusable.
 
 ## v0.2.0 - Event Calendar Export
 
@@ -49,7 +65,7 @@ This first version establishes a local-first US stock earnings calendar for pers
   - company name
   - sector
   - latest sale, net change, and percent change
-  - EPS estimate when available
+  - ticker analysis link
 
 ### Data Sources
 
@@ -76,7 +92,7 @@ const state = {
   meta: null,
   view: "week",
   selectedDate: today,
-  tiers: new Set(["mega"]),
+  tiers: new Set(["mega", "large"]),
   sector: "",
   loading: true,
   refreshing: false,
@@ -422,7 +438,7 @@ function renderEventRow(event) {
     <article class="event-row">
       <div>
         <div class="symbol-line">
-          <strong>${escapeHtml(event.symbol)}</strong>
+          ${renderSymbolLink(event)}
           ${renderTimeBadge(event)}
           ${renderTierBadge(event.marketCapTier)}
         </div>
@@ -431,7 +447,6 @@ function renderEventRow(event) {
       </div>
       <div class="event-metrics">
         <span>${escapeHtml(latestCloseText(event))}</span>
-        <span>EPS ${escapeHtml(event.epsForecast || "N/A")}</span>
       </div>
     </article>
   `;
@@ -441,7 +456,7 @@ function renderEventCard(event) {
   return `
     <article class="event-card">
       <div class="symbol-line">
-        <strong>${escapeHtml(event.symbol)}</strong>
+        ${renderSymbolLink(event)}
         ${renderTimeBadge(event)}
         ${renderTierBadge(event.marketCapTier)}
       </div>
@@ -465,6 +480,11 @@ function renderTierBadge(tier) {
   return `<span class="tier ${escapeHtml(tier || "unknown")}">${tierLabel(tier)}</span>`;
 }
 
+function renderSymbolLink(event) {
+  const symbol = event.symbol || "UNKNOWN";
+  return `<a class="symbol-link" href="${escapeHtml(yahooAnalysisUrl(symbol))}" target="_blank" rel="noopener" aria-label="Open ${escapeHtml(symbol)} analysis on Yahoo Finance">${escapeHtml(symbol)}</a>`;
+}
+
 function renderTimeBadge(event) {
   const time = event.reportTime;
   const label = timeLabel(time);
@@ -485,6 +505,10 @@ function calendarEventUrl(event) {
     time: event.reportTime,
   });
   return `/calendar.ics?${params.toString()}`;
+}
+
+function yahooAnalysisUrl(symbol) {
+  return `https://finance.yahoo.com/quote/${encodeURIComponent(String(symbol || "").toUpperCase())}/analysis/`;
 }
 
 function latestCloseText(event) {
