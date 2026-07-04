@@ -272,6 +272,7 @@ function render() {
   refreshButton.disabled = state.refreshing;
   refreshButton.textContent = state.refreshing ? "Refreshing..." : "Refresh";
   statusLine.textContent = statusText();
+  statusLine.classList.toggle("warn", !state.refreshing && healthNotes().length > 0);
 
   if (state.loading) {
     output.innerHTML = `<div class="empty-state">Loading earnings calendar...</div>`;
@@ -311,7 +312,36 @@ function statusText() {
     hour: "2-digit",
     minute: "2-digit",
   });
-  return `${state.meta.eventCount || state.events.length} events cached. Updated ${updated}.`;
+  const base = `${state.meta.eventCount || state.events.length} events cached. Updated ${updated}.`;
+  return [base, ...healthNotes()].join(" ");
+}
+
+const staleAfterMs = 48 * 60 * 60 * 1000;
+
+function healthNotes() {
+  const meta = state.meta;
+  if (!meta?.updatedAt) {
+    return [];
+  }
+
+  const notes = [];
+
+  if (meta.status === "rejected") {
+    notes.push(meta.rejectReason || "Last refresh was rejected to protect cached data.");
+  } else if (meta.status === "partial") {
+    const staleCount = meta.staleDates?.length || 0;
+    notes.push(
+      staleCount
+        ? `Partial refresh: ${staleCount} day(s) showing older data.`
+        : "Partial refresh: some requests failed.",
+    );
+  }
+
+  if (Date.now() - new Date(meta.updatedAt).getTime() > staleAfterMs) {
+    notes.push("Data is over 48 hours old.");
+  }
+
+  return notes;
 }
 
 function renderDailyView() {

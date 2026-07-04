@@ -1,50 +1,39 @@
 import { classifyMarketCap, formatMarketCap, parseMarketCap } from "../marketCap.js";
+import { fetchJson, snippet } from "./http.js";
 
 const endpoint = "https://api.nasdaq.com/api/calendar/earnings";
 const screenerEndpoint = "https://api.nasdaq.com/api/screener/stocks";
 
-export async function fetchNasdaqEarnings(date) {
+export async function fetchNasdaqEarnings(date, fetchOptions = {}) {
   const url = new URL(endpoint);
   url.searchParams.set("date", date);
 
-  const response = await fetch(url, {
+  const payload = await fetchJson(url, {
     headers: requestHeaders,
-    signal: AbortSignal.timeout(15_000),
+    label: `Nasdaq earnings for ${date}`,
+    timeoutMs: 15_000,
+    ...fetchOptions,
   });
 
-  if (!response.ok) {
-    throw new Error(`Nasdaq request failed for ${date}: ${response.status}`);
-  }
-
-  const payload = await response.json();
-  const rows = payload?.data?.rows;
-
-  if (!Array.isArray(rows)) {
-    return [];
-  }
-
+  const rows = extractRows(payload, `Nasdaq earnings for ${date}`);
   return rows.map((row) => normalizeNasdaqRow(row, date));
 }
 
-export async function fetchNasdaqStockDirectory() {
+export async function fetchNasdaqStockDirectory(fetchOptions = {}) {
   const url = new URL(screenerEndpoint);
   url.searchParams.set("tableonly", "true");
   url.searchParams.set("download", "true");
 
-  const response = await fetch(url, {
+  const payload = await fetchJson(url, {
     headers: requestHeaders,
-    signal: AbortSignal.timeout(30_000),
+    label: "Nasdaq screener",
+    timeoutMs: 30_000,
+    ...fetchOptions,
   });
 
-  if (!response.ok) {
-    throw new Error(`Nasdaq screener request failed: ${response.status}`);
-  }
-
-  const payload = await response.json();
-  const rows = payload?.data?.rows;
-
-  if (!Array.isArray(rows)) {
-    return new Map();
+  const rows = extractRows(payload, "Nasdaq screener");
+  if (!rows.length) {
+    throw new Error("Nasdaq screener returned zero rows; keeping previous enrichment data.");
   }
 
   const directory = new Map();
@@ -67,7 +56,43 @@ export async function fetchNasdaqStockDirectory() {
   return directory;
 }
 
-function normalizeNasdaqRow(row, reportDate) {
+// Verified Nasdaq behavior (2026-07): both endpoints answer rCode 200 with
+// data.rows as an array; days without earnings either keep the data object
+// with rows null, or (far-future dates) send data null plus bCodeMessage code
+// 1002 "No record found". Anything else (missing status, non-200 rCode,
+// unexplained null data) means a blocked or broken response and must fail
+// loudly, not become "[]".
+const noRecordCode = 1002;
+
+export function extractRows(payload, label) {
+  const rCode = payload?.status?.rCode;
+  if (rCode !== 200) {
+    const detail = payload?.status?.bCodeMessage?.[0]?.errorMessage || payload?.message;
+    throw new Error(
+      `${label} payload reported rCode ${rCode ?? "missing"}${detail ? `: ${detail}` : ""}`,
+    );
+  }
+
+  if (!payload.data || typeof payload.data !== "object") {
+    if (payload.status?.bCodeMessage?.some((entry) => entry?.code === noRecordCode)) {
+      return [];
+    }
+    throw new Error(`${label} payload has no data object: ${snippet(JSON.stringify(payload))}`);
+  }
+
+  const rows = payload.data.rows;
+  if (Array.isArray(rows)) {
+    return rows;
+  }
+
+  if (rows === null || rows === undefined) {
+    return [];
+  }
+
+  throw new Error(`${label} payload has unexpected rows type: ${snippet(JSON.stringify(rows))}`);
+}
+
+export function normalizeNasdaqRow(row, reportDate) {
   const symbol = clean(row.symbol).toUpperCase();
   const marketCap = parseMarketCap(row.marketCap);
   const reportTime = normalizeReportTime(row.time);

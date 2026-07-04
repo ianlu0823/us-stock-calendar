@@ -60,6 +60,10 @@ select {
   font-weight: 600;
 }
 
+.status-line.warn {
+  color: #b45309;
+}
+
 .topbar-actions {
   display: grid;
   justify-items: end;

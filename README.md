@@ -36,6 +36,14 @@ A local-first web app for tracking upcoming US stock earnings dates.
 
 ## Later
 
+- Second data source for cross-checking (decided 2026-07-05, not implemented yet):
+  - Keep Nasdaq as the primary source; harden that pipeline first.
+  - Candidate: Finnhub earnings calendar (free tier, official API key). Use it to
+    cross-check report dates and to fill pre-market/after-hours timing via its
+    `hour` field (`bmo`/`amc`/`dmh`), which Nasdaq mostly leaves unsupplied.
+  - Runners-up: Alpha Vantage `EARNINGS_CALENDAR`, API Ninjas.
+  - Rejected: Yahoo (no official API; crumb/429 instability already hit in v0.2.x)
+    and Google Finance (no public API at all).
 - Link to Yahoo Finance for external earnings analysis:
   - Keep Nasdaq as the source for earnings date and pre-market/after-hours timing.
   - Avoid parsing third-party EPS estimate feeds in the app.
