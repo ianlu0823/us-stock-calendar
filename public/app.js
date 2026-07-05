@@ -478,7 +478,8 @@ function renderWeekFocus() {
         (b.marketCap || 0) - (a.marketCap || 0) ||
         (Number(b.estimatesCount) || 0) - (Number(a.estimatesCount) || 0),
     )
-    .slice(0, 12);
+    .slice(0, 12)
+    .sort((a, b) => a.reportDate.localeCompare(b.reportDate) || (b.marketCap || 0) - (a.marketCap || 0));
 
   if (!top.length) {
     return "";

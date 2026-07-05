@@ -57,7 +57,10 @@ export async function refreshEarnings(options = {}) {
   }
 
   const failedDates = collectFailedDates(errors);
-  const enrichedEvents = events.map((event) => enrichEvent(event, stockDirectory));
+  const enrichedEvents = preserveKnownTimings(
+    events.map((event) => enrichEvent(event, stockDirectory)),
+    previousEvents,
+  );
   const carriedEvents = carryOverEvents(previousEvents, failedDates);
   const sortedEvents = dedupeEvents([...carriedEvents, ...enrichedEvents]).sort(compareEvents);
 
@@ -129,6 +132,40 @@ export function shouldRejectRefresh(previousCount, nextCount) {
   }
 
   return `Refusing to overwrite cache: event count would drop from ${previousCount} to ${nextCount}. Re-run with force to override.`;
+}
+
+// Nasdaq removes the pre/after-hours flag once a report date has passed (and
+// occasionally retracts it beforehand). Timing is one-way knowledge: a known
+// value from the previous cache always beats a fresh "unknown" for the same
+// symbol and date.
+export function preserveKnownTimings(events, previousEvents) {
+  const knownTimings = new Map();
+  previousEvents.forEach((event) => {
+    if (event.reportTime === "premarket" || event.reportTime === "afterhours") {
+      knownTimings.set(`${event.reportDate}:${event.symbol}`, event);
+    }
+  });
+
+  if (!knownTimings.size) {
+    return events;
+  }
+
+  return events.map((event) => {
+    if (event.reportTime !== "unknown") {
+      return event;
+    }
+
+    const previous = knownTimings.get(`${event.reportDate}:${event.symbol}`);
+    if (!previous) {
+      return event;
+    }
+
+    return {
+      ...event,
+      reportTime: previous.reportTime,
+      reportTimeLabel: previous.reportTimeLabel,
+    };
+  });
 }
 
 export function carryOverEvents(previousEvents, failedDates) {

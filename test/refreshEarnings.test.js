@@ -6,6 +6,7 @@ import {
   dedupeEvents,
   directoryFromEvents,
   findProfile,
+  preserveKnownTimings,
   shouldRejectRefresh,
 } from "../src/refreshEarnings.js";
 
@@ -63,6 +64,30 @@ test("directoryFromEvents rebuilds enrichment profiles from cached events", () =
   const directory = directoryFromEvents(events);
   assert.equal(directory.size, 1);
   assert.equal(directory.get("AAPL").sector, "Technology");
+});
+
+test("preserveKnownTimings keeps a previously known timing over a fresh unknown", () => {
+  const fresh = [
+    { symbol: "NKE", reportDate: "2026-06-30", reportTime: "unknown", reportTimeLabel: "Unknown" },
+    { symbol: "GIS", reportDate: "2026-07-01", reportTime: "unknown", reportTimeLabel: "Unknown" },
+    { symbol: "TSM", reportDate: "2026-07-16", reportTime: "premarket", reportTimeLabel: "Before" },
+  ];
+  const previous = [
+    { symbol: "NKE", reportDate: "2026-06-30", reportTime: "afterhours", reportTimeLabel: "After" },
+    { symbol: "TSM", reportDate: "2026-07-16", reportTime: "afterhours", reportTimeLabel: "After" },
+  ];
+
+  const result = preserveKnownTimings(fresh, previous);
+  assert.equal(result.find((e) => e.symbol === "NKE").reportTime, "afterhours");
+  assert.equal(result.find((e) => e.symbol === "GIS").reportTime, "unknown");
+  // A fresh known value wins over the cached one.
+  assert.equal(result.find((e) => e.symbol === "TSM").reportTime, "premarket");
+});
+
+test("preserveKnownTimings does not apply timing across moved report dates", () => {
+  const fresh = [{ symbol: "NKE", reportDate: "2026-07-02", reportTime: "unknown" }];
+  const previous = [{ symbol: "NKE", reportDate: "2026-06-30", reportTime: "afterhours" }];
+  assert.equal(preserveKnownTimings(fresh, previous)[0].reportTime, "unknown");
 });
 
 test("findProfile falls back to dash and slash symbol variants", () => {
