@@ -9,3 +9,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: CACHE_BOOTSTRAP_URL
+        value: https://raw.githubusercontent.com/ianlu0823/us-stock-calendar/cache-data/earnings-cache.json
+      # Fine-grained PAT with read-only contents access to this repo;
+      # set in the Render dashboard, never committed.
+      - key: CACHE_BOOTSTRAP_TOKEN
+        sync: false

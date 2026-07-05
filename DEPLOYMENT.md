@@ -106,12 +106,42 @@ curl -X POST https://your-render-service.onrender.com/api/refresh
 
 - The service may sleep when idle.
 - The first request after sleep may be slow.
-- Cache data does not persist unless persistent storage is configured.
+- The local filesystem is ephemeral; the cache bootstrap below restores data
+  on every cold start.
 - This is fine for a deployment smoke test.
+
+## Scheduled Refresh And Cache Persistence
+
+A GitHub Actions workflow (`.github/workflows/refresh-cache.yml`) refreshes
+the earnings cache twice a day (before US market open and after close) and
+commits the result to the orphan `cache-data` branch. `main` history stays
+clean; the `cache-data` branch doubles as a daily snapshot archive.
+
+The workflow seeds the previous cache before refreshing, so merge-style
+writes, the shrink guard, and known-timing preservation keep working across
+runs. A rejected refresh exits non-zero and fails the workflow run loudly.
+
+On startup, when the local cache file is missing and `CACHE_BOOTSTRAP_URL`
+is set, the server downloads the published cache and persists it locally.
+This is how Render Free survives restarts and spin-downs without a disk.
+
+Render environment variables:
+
+```text
+CACHE_BOOTSTRAP_URL=https://raw.githubusercontent.com/ianlu0823/us-stock-calendar/cache-data/earnings-cache.json
+CACHE_BOOTSTRAP_TOKEN=<fine-grained PAT, contents read-only on this repo>
+```
+
+The token is required because the repository is private. Create it at
+GitHub Settings -> Developer settings -> Fine-grained tokens with access to
+only this repository and read-only Contents permission, then set it in the
+Render dashboard (render.yaml marks it `sync: false`).
+
+If the bootstrap fails, the app still starts with an empty cache and logs
+the reason; a manual Refresh rebuilds data from Nasdaq directly.
 
 ### Not Included Yet
 
-- Scheduled refresh.
 - Telegram digest.
 - Calendar subscription feed.
 - Refresh token protection.

@@ -1,0 +1,57 @@
+name: Refresh earnings cache
+
+on:
+  schedule:
+    # 10:30 UTC ~ before US market open, 21:30 UTC ~ after close (ET).
+    - cron: "30 10 * * *"
+    - cron: "30 21 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out app
+        uses: actions/checkout@v4
+
+      - name: Check out cache branch
+        uses: actions/checkout@v4
+        with:
+          ref: cache-data
+          path: cache-branch
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The previous cache must be in place before refresh runs: merge-style
+      # writes, the shrink guard, and known-timing preservation all depend on it.
+      - name: Seed previous cache
+        run: |
+          mkdir -p data
+          if [ -f cache-branch/earnings-cache.json ]; then
+            cp cache-branch/earnings-cache.json data/earnings-cache.json
+          else
+            echo "No previous cache found; starting fresh."
+          fi
+
+      - name: Refresh earnings data
+        run: npm run refresh
+
+      - name: Publish cache to cache-data branch
+        run: |
+          cp data/earnings-cache.json cache-branch/earnings-cache.json
+          cd cache-branch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add earnings-cache.json
+          if git diff --cached --quiet; then
+            echo "Cache unchanged; nothing to publish."
+          else
+            git commit -m "Update earnings cache ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+            git push origin cache-data
+          fi
