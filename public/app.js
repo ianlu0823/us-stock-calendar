@@ -103,6 +103,7 @@ const state = {
 };
 
 const output = document.querySelector("#calendar-output");
+const weekFocus = document.querySelector("#week-focus");
 const statusLine = document.querySelector("#status-line");
 const refreshButton = document.querySelector("#refresh-button");
 const versionLink = document.querySelector("#version-link");
@@ -144,12 +145,16 @@ sectorFilter.addEventListener("change", () => {
   render();
 });
 
-output.addEventListener("click", (event) => {
+output.addEventListener("click", handleActionClick);
+weekFocus.addEventListener("click", handleActionClick);
+
+function handleActionClick(event) {
   const action = event.target.closest("[data-action]")?.dataset.action;
   if (!action) {
     return;
   }
 
+  if (action === "go-today") goToToday();
   if (action === "prev-day") shiftSelectedDate(-1);
   if (action === "next-day") shiftSelectedDate(1);
   if (action === "prev-week") shiftSelectedDate(-7);
@@ -157,7 +162,7 @@ output.addEventListener("click", (event) => {
   if (action === "prev-month") shiftSelectedMonth(-1);
   if (action === "next-month") shiftSelectedMonth(1);
   if (action === "show-day") showDay(event.target.closest("[data-date]")?.dataset.date);
-});
+}
 
 output.addEventListener("change", (event) => {
   if (event.target.matches("[data-date-picker]")) {
@@ -285,6 +290,7 @@ function render() {
   refreshButton.textContent = state.refreshing ? "Refreshing..." : "Refresh";
   statusLine.textContent = statusText();
   statusLine.classList.toggle("warn", !state.refreshing && healthNotes().length > 0);
+  weekFocus.innerHTML = state.loading || state.error ? "" : renderWeekFocus();
 
   if (state.loading) {
     output.innerHTML = `<div class="empty-state">Loading earnings calendar...</div>`;
@@ -444,9 +450,60 @@ function renderDateNavigator(scope, title) {
       <button type="button" class="icon-button" data-action="${prevAction}" aria-label="Previous">‹</button>
       <div>
         <h2>${escapeHtml(title)}</h2>
-        <input type="date" value="${state.selectedDate}" data-date-picker>
+        <div class="jump-controls">
+          <input type="date" value="${state.selectedDate}" data-date-picker>
+          <button type="button" class="today-button" data-action="go-today" ${state.selectedDate === today ? "disabled" : ""}>Today</button>
+        </div>
       </div>
       <button type="button" class="icon-button" data-action="${nextAction}" aria-label="Next">›</button>
+    </div>
+  `;
+}
+
+function goToToday() {
+  state.selectedDate = today;
+  render();
+}
+
+// Editorial spotlight for the displayed week: fixed criteria (market cap,
+// then analyst coverage), deliberately ignoring the user's tier/sector
+// filters so the market's headline names always show.
+function renderWeekFocus() {
+  const weekStart = startOfWeek(parseDate(state.selectedDate));
+  const weekDates = Array.from({ length: 5 }, (_, index) => toDateString(addDays(weekStart, index)));
+  const inWeek = state.events.filter((event) => weekDates.includes(event.reportDate));
+  const top = [...inWeek]
+    .sort(
+      (a, b) =>
+        (b.marketCap || 0) - (a.marketCap || 0) ||
+        (Number(b.estimatesCount) || 0) - (Number(a.estimatesCount) || 0),
+    )
+    .slice(0, 12);
+
+  if (!top.length) {
+    return "";
+  }
+
+  const range = `${formatShortDate(weekDates[0])} - ${formatShortDate(weekDates[4])}`;
+
+  return `
+    <div class="focus-header">
+      <h2>Most anticipated</h2>
+      <span>${escapeHtml(range)}</span>
+    </div>
+    <div class="focus-chips">
+      ${top
+        .map((event) => {
+          const label = timeLabel(event.reportTime);
+          return `
+            <button type="button" class="focus-chip" data-action="show-day" data-date="${event.reportDate}" aria-label="Show ${escapeHtml(event.symbol)} earnings day">
+              <strong>${escapeHtml(event.symbol)}</strong>
+              <span class="focus-day">${escapeHtml(weekdayName(parseDate(event.reportDate)))}</span>
+              ${label ? `<span class="focus-time ${escapeHtml(event.reportTime)}">${label}</span>` : ""}
+            </button>
+          `;
+        })
+        .join("")}
     </div>
   `;
 }

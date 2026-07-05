@@ -229,6 +229,124 @@ h1 {
   font-weight: 600;
 }
 
+.week-focus {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.week-focus:empty {
+  display: none;
+}
+
+.focus-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.focus-header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.focus-header span {
+  color: var(--faint);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.focus-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.focus-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.focus-chip:hover,
+.focus-chip:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.focus-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.focus-chip strong {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.focus-time {
+  font-weight: 700;
+}
+
+.focus-time.premarket {
+  color: var(--pre-text);
+}
+
+.focus-time.afterhours {
+  color: var(--after-text);
+}
+
+.jump-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.today-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: border-color 0.15s ease;
+}
+
+.today-button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.today-button:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.today-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .calendar-panel {
   min-height: 360px;
   padding: 20px;
@@ -807,5 +925,20 @@ h1 {
 
   .event-metrics {
     text-align: left;
+  }
+
+  .focus-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .focus-chip {
+    flex: none;
+  }
+
+  .calendar-header input {
+    width: 138px;
   }
 }
