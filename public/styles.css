@@ -557,6 +557,17 @@ h1 {
 .month-cell {
   min-height: 112px;
   padding: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.month-cell:hover {
+  background: #eef1f4;
+}
+
+.month-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .month-cell.is-outside {

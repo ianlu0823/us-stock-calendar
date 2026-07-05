@@ -166,6 +166,18 @@ output.addEventListener("change", (event) => {
   }
 });
 
+output.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const cell = event.target.closest('[data-action="show-day"][role="button"]');
+  if (cell) {
+    event.preventDefault();
+    showDay(cell.dataset.date);
+  }
+});
+
 loadVersion();
 loadData();
 
@@ -407,7 +419,7 @@ function renderMonthlyView() {
           const isOutside = day.getMonth() !== month;
           const isToday = date === today;
           return `
-            <section class="month-cell ${isOutside ? "is-outside" : ""}${isToday ? " is-today" : ""}">
+            <section class="month-cell ${isOutside ? "is-outside" : ""}${isToday ? " is-today" : ""}" data-action="show-day" data-date="${date}" role="button" tabindex="0" aria-label="Show earnings for ${date}">
               <div class="month-date">${day.getDate()}</div>
               ${
                 events.length
