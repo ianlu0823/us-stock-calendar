@@ -7,12 +7,12 @@ const eventDurationMinutes = 30;
 
 const reportTimes = {
   premarket: {
-    label: "Pre",
+    label: "Before open",
     hour: 8,
     minute: 0,
   },
   afterhours: {
-    label: "After",
+    label: "After close",
     hour: 16,
     minute: 30,
   },

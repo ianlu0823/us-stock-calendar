@@ -136,7 +136,7 @@ function clean(value) {
 }
 
 const reportTimeLabels = {
-  premarket: "Pre",
+  premarket: "Before",
   afterhours: "After",
   unknown: "Unknown",
 };

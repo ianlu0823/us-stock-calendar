@@ -365,10 +365,11 @@ function renderWeeklyView() {
         .map((day) => {
           const date = toDateString(day);
           const events = eventsForDate(date);
+          const isToday = date === today;
           return `
-            <section class="day-column">
+            <section class="day-column${isToday ? " is-today" : ""}">
               <div class="day-heading">
-                <span>${weekdayName(day)}</span>
+                <span>${weekdayName(day)}${isToday ? `<span class="today-chip">Today</span>` : ""}</span>
                 <strong>${formatMonthDay(date)}</strong>
               </div>
               <div class="event-stack">
@@ -404,8 +405,9 @@ function renderMonthlyView() {
           const date = toDateString(day);
           const events = eventsForDate(date);
           const isOutside = day.getMonth() !== month;
+          const isToday = date === today;
           return `
-            <section class="month-cell ${isOutside ? "is-outside" : ""}">
+            <section class="month-cell ${isOutside ? "is-outside" : ""}${isToday ? " is-today" : ""}">
               <div class="month-date">${day.getDate()}</div>
               ${
                 events.length
@@ -453,7 +455,7 @@ function renderTimeGroups(events) {
 
           return `
             <section class="time-group">
-              <h3>${timeLabel(time)}</h3>
+              <h3 class="time-group-heading ${time}">${timeGroupHeading(time)}</h3>
               <div class="event-list">${groupedEvents.map(renderEventRow).join("")}</div>
             </section>
           `;
@@ -610,8 +612,15 @@ function timeRank(time) {
 
 function timeLabel(time) {
   return {
-    premarket: "Pre",
+    premarket: "Before",
     afterhours: "After",
+  }[time] || "";
+}
+
+function timeGroupHeading(time) {
+  return {
+    premarket: "Before open",
+    afterhours: "After close",
   }[time] || "";
 }
 
