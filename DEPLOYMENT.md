@@ -113,9 +113,9 @@ curl -X POST https://your-render-service.onrender.com/api/refresh
 ## Scheduled Refresh And Cache Persistence
 
 A GitHub Actions workflow (`.github/workflows/refresh-cache.yml`) refreshes
-the earnings cache twice a day (before US market open and after close) and
-commits the result to the orphan `cache-data` branch. `main` history stays
-clean; the `cache-data` branch doubles as a daily snapshot archive.
+the earnings cache once a day after US market close and commits the result
+to the orphan `cache-data` branch. `main` history stays clean; the
+`cache-data` branch doubles as a daily snapshot archive.
 
 The workflow seeds the previous cache before refreshing, so merge-style
 writes, the shrink guard, and known-timing preservation keep working across

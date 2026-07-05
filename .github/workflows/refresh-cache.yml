@@ -2,8 +2,8 @@ name: Refresh earnings cache
 
 on:
   schedule:
-    # 10:30 UTC ~ before US market open, 21:30 UTC ~ after close (ET).
-    - cron: "30 10 * * *"
+    # Once daily after US market close (~17:30 ET during DST): tomorrow's
+    # timings are mostly published by then and today's not yet retracted.
     - cron: "30 21 * * *"
   workflow_dispatch:
 
