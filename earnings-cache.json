@@ -1,26 +1,6 @@
 {
   "events": [
     {
-      "id": "2026-07-10:DAL:Jun/2026",
-      "symbol": "DAL",
-      "name": "Delta Air Lines, Inc.",
-      "reportDate": "2026-07-10",
-      "reportTime": "premarket",
-      "reportTimeLabel": "Before",
-      "fiscalQuarterEnding": "Jun/2026",
-      "estimatesCount": "7",
-      "marketCap": 57015916701,
-      "marketCapDisplay": "$57.0B",
-      "marketCapTier": "large",
-      "sector": "Consumer Discretionary",
-      "industry": "Air Freight/Delivery Services",
-      "country": "United States",
-      "lastSale": "$84.17",
-      "netChange": "-2.53",
-      "percentChange": "-2.918%",
-      "source": "nasdaq"
-    },
-    {
       "id": "2026-07-13:FBK:Jun/2026",
       "symbol": "FBK",
       "name": "FB Financial Corporation",
@@ -2261,14 +2241,14 @@
       "source": "nasdaq"
     },
     {
-      "id": "2026-07-17:CSAI:Jun/2026",
+      "id": "2026-07-17:CSAI:Mar/2026",
       "symbol": "CSAI",
       "name": "Cloudastructure, Inc.",
       "reportDate": "2026-07-17",
       "reportTime": "premarket",
       "reportTimeLabel": "Before",
-      "fiscalQuarterEnding": "Jun/2026",
-      "estimatesCount": "1",
+      "fiscalQuarterEnding": "Mar/2026",
+      "estimatesCount": "N/A",
       "marketCap": 10434005,
       "marketCapDisplay": "$10.4M",
       "marketCapTier": "small",
@@ -91384,11 +91364,11 @@
   "meta": {
     "source": "nasdaq",
     "status": "ok",
-    "updatedAt": "2026-07-17T22:23:42.127Z",
-    "lastRefreshAttemptAt": "2026-07-17T22:23:42.128Z",
-    "startDate": "2026-07-10",
-    "endDate": "2026-09-15",
-    "eventCount": 4569,
+    "updatedAt": "2026-07-18T22:25:09.516Z",
+    "lastRefreshAttemptAt": "2026-07-18T22:25:09.516Z",
+    "startDate": "2026-07-11",
+    "endDate": "2026-09-16",
+    "eventCount": 4568,
     "stockDirectoryCount": 7122,
     "staleDates": [],
     "errors": []
